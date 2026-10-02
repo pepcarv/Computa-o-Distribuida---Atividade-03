@@ -11,10 +11,22 @@ Referências extra aula:
 - https://www.geeksforgeeks.org/c/sum-of-an-array-using-mpi/
 - https://stackoverflow.com/questions/15658145/how-to-share-work-roughly-evenly-between-processes-in-mpi-despite-the-array-size
 - https://stackoverflow.com/questions/17570996/mpi-printing-in-an-order
+
+OBS: Tentamos solucionar a ordem apenas com o MPI Barrier, mas não funcionou, porque o print 
+dos processos ainda sim era muito rápido e poderia chegar ao temrinal antes de um outro.
+Então, procuramos uma solução buscando manter a proposta do descritivo da atividade
+apenas usando o Scatter e Reduce (a opção melhor seria com send e recive).
+
+Para isso encontramos a função usleep. Assim, cada processo imprime sua parte 
+na sua vez (controlado por MPI_Barrier), e o fflush com usleep dá tempo para a 
+linha chegar ao terminal antes do próximo processo imprimir, mantendo a saída 
+na ordem dos ranks.
+
 */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h> // para usleep
 #include <mpi.h>
 
 
@@ -92,12 +104,17 @@ int main(int argc, char *argv[]) {
             
             printf("\n");
             fflush(stdout);
+            usleep(20000); // 20 ms pro mpirun repassar a linha
         }
         // barrier pra sinc
         MPI_Barrier(MPI_COMM_WORLD);
     }
 
-    if (rank == 0) printf("\n");
+    if (rank == 0) {
+        printf("\n");
+        fflush(stdout);
+        usleep(20000);   // 20 ms
+    }
     MPI_Barrier(MPI_COMM_WORLD);
 
 
@@ -107,6 +124,7 @@ int main(int argc, char *argv[]) {
         if (rank == r) {
             printf("Processo %d: soma local dos quadrados = %ld\n", rank, soma_local);
             fflush(stdout);
+            usleep(20000); // 20 ms pro mpirun repassar a linha
         }
         
         MPI_Barrier(MPI_COMM_WORLD);
