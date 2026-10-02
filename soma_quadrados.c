@@ -41,15 +41,11 @@ int main(int argc, char *argv[]) {
     int rank;
     int tam;
 
-    int pedaco = N / tam;
-
-    int *global = NULL;
-    int *local = malloc(pedaco * sizeof(int));
 
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_tam(MPI_COMM_WORLD, &tam);
+    MPI_Comm_size(MPI_COMM_WORLD, &tam);
 
 
 
@@ -64,12 +60,17 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    int pedaco = N / tam;
+
+    int *global = NULL;
     // 1 rank 0 cria o vetor 1->N
     if (rank == 0) {
         global = malloc(N * sizeof(int));
         for (int i = 0; i < N; i++)
             global[i] = i + 1;
     }
+
+    int *local = malloc(pedaco * sizeof(int));
 
     // 2 Divisão igual entre os processos
     MPI_Scatter(global, pedaco, MPI_INT, local, pedaco, MPI_INT, 0, MPI_COMM_WORLD);
