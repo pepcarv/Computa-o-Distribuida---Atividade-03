@@ -10,7 +10,7 @@ mpirun -np 4 ./soma_quadrados
 Referências extra aula:
 - https://www.geeksforgeeks.org/c/sum-of-an-array-using-mpi/
 - https://stackoverflow.com/questions/15658145/how-to-share-work-roughly-evenly-between-processes-in-mpi-despite-the-array-size
-
+- https://stackoverflow.com/questions/17570996/mpi-printing-in-an-order
 */
 
 #include <stdio.h>
@@ -81,12 +81,36 @@ int main(int argc, char *argv[]) {
 
 
     // ========== resutls ============
-    printf("Processo %d recebeu:", rank);
-    for (int i = 0; i < pedaco; i++)
-        printf(" %d", local[i]);
-    printf("\n");
-    printf("Processo %d: soma local dos quadrados = %ld\n", rank, soma_local);
+    // vetor recebido em ordem
+    for (int r = 0; r < tam; r++) {
+        if (rank == r) {
+            printf("Processo %d recebeu:", rank);
+            
+            for (int i = 0; i < pedaco; i++)
+                printf(" %d", local[i]);
+            
+            
+            printf("\n");
+            fflush(stdout);
+        }
+        // barrier pra sinc
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
 
+    if (rank == 0) printf("\n");
+    MPI_Barrier(MPI_COMM_WORLD);
+
+
+
+    // cada rank imprime
+    for (int r = 0; r < tam; r++) {
+        if (rank == r) {
+            printf("Processo %d: soma local dos quadrados = %ld\n", rank, soma_local);
+            fflush(stdout);
+        }
+        
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
 
 
 
